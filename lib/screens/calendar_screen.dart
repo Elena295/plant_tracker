@@ -34,19 +34,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
-bool _isWateringDay(Plant plant, DateTime selectedDay) {
-  final plantDate = DateTime(plant.createdAt.year, plant.createdAt.month, plant.createdAt.day);
-  final selectedDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
-  
-  final daysDifference = selectedDate.difference(plantDate).inDays;
-
-  if (plant.wateringFrequency == '1 раз в 2 дня') {
-    return daysDifference.abs() % 2 == 0;
-  }
-  
-  return true;
-}
+  bool _isWateringDay(Plant plant, DateTime selectedDay) {
+    final plantDate = DateTime(plant.createdAt.year, plant.createdAt.month, plant.createdAt.day);
+    final selectedDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
     
+    final daysDifference = selectedDate.difference(plantDate).inDays;
+
+    if (plant.wateringFrequency == '1 раз в 2 дня') {
+      return daysDifference.abs() % 2 == 0;
+    }
+    
+    return true;
+  }
 
   List<Plant> _getPlantsForDay(DateTime day) {
     return _plants.where((plant) => _isWateringDay(plant, day)).toList();
@@ -59,7 +58,7 @@ bool _isWateringDay(Plant plant, DateTime selectedDay) {
         child: Column(
           children: [
             const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.only(top: 16, bottom: 8),
               child: Text(
                 'Календарь',
                 style: TextStyle(
@@ -71,7 +70,7 @@ bool _isWateringDay(Plant plant, DateTime selectedDay) {
             ),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Уменьшили отступы
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -84,10 +83,12 @@ bool _isWateringDay(Plant plant, DateTime selectedDay) {
                 ],
               ),
               child: TableCalendar(
+                locale: 'ru_RU', 
                 firstDay: DateTime.utc(2020, 1, 1),
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusedDay,
                 calendarFormat: _calendarFormat,
+                rowHeight: 40, // 👈 Уменьшили высоту строк, чтобы календарь стал компактнее
                 selectedDayPredicate: (day) {
                   return isSameDay(_selectedDay, day);
                 },
@@ -130,7 +131,7 @@ bool _isWateringDay(Plant plant, DateTime selectedDay) {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12), // Уменьшили отступ
             Expanded(
               child: _buildScheduleList(),
             ),

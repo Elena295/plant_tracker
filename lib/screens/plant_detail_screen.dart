@@ -304,7 +304,7 @@ Future<void> _deletePlant() async {
         content,
         const SizedBox(height: 16),
         Divider(
-          color: AppColors.primaryGreen,  // #ADE97F — зелёная линия как в дизайне
+          color: AppColors.primaryGreen,
           thickness: 2,
         ),
       ],

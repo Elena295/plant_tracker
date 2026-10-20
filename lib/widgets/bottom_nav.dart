@@ -13,70 +13,78 @@ class BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      height: 50, // Общая высота меню
-      decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          // Кнопка "Растения" (Листик)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(0),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Белый фон с ЖЕСТКИМИ размерами
-                  if (currentIndex == 0)
-                    Container(
-                      width: 160,  // ← МЕНЯЙ ШИРИНУ ЗДЕСЬ (чем больше число, тем шире)
-                      height: 35,  // ← МЕНЯЙ ВЫСОТУ ЗДЕСЬ (чем больше число, тем выше)
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
+    // Берем системный отступ снизу, чтобы на Samsung и iPhone меню стояло идеально
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Padding(
+      // Если снизу есть системная полоска (как на iPhone), добавляем её высоту. Иначе оставляем 16.
+      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding > 0 ? bottomPadding : 16),
+      child: Container(
+        height: 50, 
+        decoration: BoxDecoration(
+          color: AppColors.primaryGreen,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            // Левая кнопка (Растения)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onTap(0),
+                behavior: HitTestBehavior.opaque,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (currentIndex == 0)
+                      FractionallySizedBox(
+                        widthFactor: 0.85, // 👈 Занимает 85% ширины от своей половины
+                        child: Container(
+                          height: 35,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
+                    const Icon(
+                      Icons.eco_outlined,
+                      color: Colors.black,
+                      size: 24,
                     ),
-                  // Иконка поверх фона
-                  const Icon(
-                    Icons.eco_outlined,
-                    color: Colors.black,
-                    size: 24,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          // Кнопка "Календарь"
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(1),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Белый фон с ЖЕСТКИМИ размерами
-                  if (currentIndex == 1)
-                    Container(
-                      width: 160,  // ← То же самое число, что и выше
-                      height: 35,  // ← То же самое число, что и выше
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
+            // Правая кнопка (Календарь)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onTap(1),
+                behavior: HitTestBehavior.opaque,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (currentIndex == 1)
+                      FractionallySizedBox(
+                        widthFactor: 0.85, // 👈 То же самое для правой кнопки
+                        child: Container(
+                          height: 35, 
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      color: Colors.black,
+                      size: 24,
                     ),
-                  // Иконка поверх фона
-                  const Icon(
-                    Icons.calendar_today_outlined,
-                    color: Colors.black,
-                    size: 24,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

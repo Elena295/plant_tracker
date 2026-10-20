@@ -26,7 +26,6 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
 
   final StorageService _storageService = StorageService();
 
-  // ЛОГИКА: показываем второе поле только если выбрано "2 раза в день"
   bool get _showSecondTime => _selectedFrequency == '2 раза в день';
 
   @override
@@ -63,7 +62,7 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
     }
   }
 
-    Future<void> _savePlant() async {
+  Future<void> _savePlant() async {
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите название растения')),
@@ -82,7 +81,6 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
       temperature: _temperatureController.text,
       ventilation: _selectedVentilation,
       additionalInfo: _additionalInfoController.text,
-      // createdAt установится автоматически в конструкторе модели (DateTime.now())
     );
 
     await _storageService.addPlant(plant);
@@ -130,7 +128,6 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
                 const SizedBox(height: 8),
                 _buildTimePickerButton(_firstWateringTime, () => _selectTime(true)),
                 
-                // ВТОРОЕ ПОЛЕ: появляется только при выборе "2 раза в день"
                 if (_showSecondTime) ...[
                   const SizedBox(height: 24),
                   _buildInputLabel('Время второго полива'),
@@ -305,38 +302,91 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
     );
   }
 
+  // 👇 ИСПРАВЛЕННЫЙ МЕТОД (Возвращен изначальный системный цвет и анимация)
   Widget _buildDropdown(
     List<String> items,
     String value,
     Function(String?) onChanged,
   ) {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.borderGreen, width: 2),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(
-                item,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onTap: () async {
+            final RenderBox renderBox = context.findRenderObject() as RenderBox;
+            final position = renderBox.localToGlobal(Offset.zero);
+            final width = constraints.maxWidth; // Берем точную ширину поля
+
+            final selected = await showDialog<String>(
+              context: context,
+              barrierColor: Colors.transparent, // Убираем затемнение фона
+              builder: (BuildContext context) {
+                return Stack(
+                  children: [
+                    Positioned(
+                      left: position.dx,
+                      top: position.dy + 56,
+                      width: width, // 👈 Жестко задаем ширину списка!
+                      child: Material(
+                        // 👈 Убрали жесткий цвет, теперь фон системный (как был изначально)
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListView(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          children: items.map((String item) {
+                            return InkWell(
+                              onTap: () => Navigator.pop(context, item),
+                              // 👇 Убрали кастомные цвета, вернули стандартную анимацию Flutter
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                child: Text(
+                                  item,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
+
+            if (selected != null) {
+              onChanged(selected);
+            }
+          },
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              // 👇 Зеленая рамка остается ТОЛЬКО здесь (у поля ввода)
+              border: Border.all(color: AppColors.borderGreen, width: 2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
+                const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

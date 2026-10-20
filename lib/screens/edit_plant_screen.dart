@@ -96,6 +96,7 @@ class _EditPlantScreenState extends State<EditPlantScreen> {
     final updatedPlant = widget.plant.copyWith(
       name: _nameController.text,
       wateringFrequency: _selectedFrequency,
+      firstWateringTime: _firstWateringTime, // 👈 Чтобы сохранялось первое время
       secondWateringTime: _showSecondTime ? _secondWateringTime : null,
       wateringType: _selectedWateringType,
       lighting: _selectedLighting,
@@ -313,38 +314,91 @@ class _EditPlantScreenState extends State<EditPlantScreen> {
     );
   }
 
+  // 👇 ИСПРАВЛЕННЫЙ МЕТОД (Возвращен изначальный системный цвет и анимация)
   Widget _buildDropdown(
     List<String> items,
     String value,
     Function(String?) onChanged,
   ) {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.borderGreen, width: 2),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(
-                item,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onTap: () async {
+            final RenderBox renderBox = context.findRenderObject() as RenderBox;
+            final position = renderBox.localToGlobal(Offset.zero);
+            final width = constraints.maxWidth; // Берем точную ширину поля
+
+            final selected = await showDialog<String>(
+              context: context,
+              barrierColor: Colors.transparent, // Убираем затемнение фона
+              builder: (BuildContext context) {
+                return Stack(
+                  children: [
+                    Positioned(
+                      left: position.dx,
+                      top: position.dy + 56,
+                      width: width, // 👈 Жестко задаем ширину списка!
+                      child: Material(
+                        // 👈 Убрали жесткий цвет, теперь фон системный (как был изначально)
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListView(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          children: items.map((String item) {
+                            return InkWell(
+                              onTap: () => Navigator.pop(context, item),
+                              // 👇 Убрали кастомные цвета, вернули стандартную анимацию Flutter
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                child: Text(
+                                  item,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
+
+            if (selected != null) {
+              onChanged(selected);
+            }
+          },
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              // 👇 Зеленая рамка остается ТОЛЬКО здесь (у поля ввода)
+              border: Border.all(color: AppColors.borderGreen, width: 2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
+                const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
