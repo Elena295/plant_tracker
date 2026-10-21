@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemBuilder: (context, index) {
                         return PlantCard(
                           plant: _plants[index],
+                          onUpdate: _loadPlants,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -64,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
             ),
+            _buildWaterAllButton(), // 👈 Новая кнопка "Полить все"
             _buildAddButton(),
             BottomNav(
               currentIndex: _currentIndex,
@@ -84,42 +86,101 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  
-Widget _buildHeader() {
-  return Stack(
-    children: [
-      // Картинка на всю ширину (без закруглений)
-      Image.asset(
-        'assets/images/plant_header.png',
-        height: 171,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            height: 171,
-            width: double.infinity,
-            color: AppColors.primaryGreen.withOpacity(0.3),
-            child: const Center(
-              child: Icon(Icons.eco, size: 80, color: Colors.black54),
+  Widget _buildHeader() {
+    return Stack(
+      children: [
+        Image.asset(
+          'assets/images/plant_header.png',
+          height: 171,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 171,
+              width: double.infinity,
+              color: AppColors.primaryGreen.withOpacity(0.3),
+              child: const Center(
+                child: Icon(Icons.eco, size: 80, color: Colors.black54),
+              ),
+            );
+          },
+        ),
+        const Positioned(
+          left: 36,
+          bottom: 50,
+          child: Text(
+            'Мои растения',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1C1C1E),
             ),
-          );
-        },
-      ),
-      const Positioned(
-        left: 36,
-        bottom: 50,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // НОВЫЙ МЕТОД: Кнопка "Полить все"
+  Widget _buildWaterAllButton() {
+    if (_plants.isEmpty) return const SizedBox.shrink();
+
+    final hasUnwatered = _plants.any((p) => !p.isWatered);
+    
+    if (!hasUnwatered) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Text(
-          'Мои растения',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1C1C1E),
+          'Все растения политы ✅',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey, fontSize: 16),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.blue, width: 2),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              for (var plant in _plants) {
+                if (!plant.isWatered) {
+                  plant.markAsWatered();
+                  await _storageService.updatePlant(plant);
+                }
+              }
+              _loadPlants();
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.water_drop, color: Colors.blue, size: 24),
+                SizedBox(width: 10),
+                Text(
+                  'Полить все растения',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ],
-  );
-}
+    );
+  }
+
   Widget _buildAddButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -12,6 +12,8 @@ class Plant {
   String temperature;
   String ventilation;
   String additionalInfo;
+  DateTime? nextWateringDate; // НОВОЕ: дата следующего полива
+  bool isWatered; //  НОВОЕ: полито или нет
 
   Plant({
     required this.id,
@@ -25,6 +27,8 @@ class Plant {
     this.temperature = '',
     this.ventilation = '',
     this.additionalInfo = '',
+    this.nextWateringDate,
+    this.isWatered = false, // По умолчанию растение не полито
   }) : this.createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -42,6 +46,8 @@ class Plant {
       'temperature': temperature,
       'ventilation': ventilation,
       'additionalInfo': additionalInfo,
+      'nextWateringDate': nextWateringDate?.millisecondsSinceEpoch,
+      'isWatered': isWatered,
     };
   }
 
@@ -72,6 +78,10 @@ class Plant {
       temperature: map['temperature'] ?? '',
       ventilation: map['ventilation'] ?? '',
       additionalInfo: map['additionalInfo'] ?? '',
+      nextWateringDate: map['nextWateringDate'] != null 
+          ? DateTime.fromMillisecondsSinceEpoch(map['nextWateringDate']) 
+          : null,
+      isWatered: map['isWatered'] ?? false,
     );
   }
 
@@ -90,6 +100,8 @@ class Plant {
     String? temperature,
     String? ventilation,
     String? additionalInfo,
+    DateTime? nextWateringDate,
+    bool? isWatered,
   }) {
     return Plant(
       id: id ?? this.id,
@@ -103,6 +115,24 @@ class Plant {
       temperature: temperature ?? this.temperature,
       ventilation: ventilation ?? this.ventilation,
       additionalInfo: additionalInfo ?? this.additionalInfo,
+      nextWateringDate: nextWateringDate ?? this.nextWateringDate,
+      isWatered: isWatered ?? this.isWatered,
     );
+  }
+
+  // НОВЫЙ МЕТОД: Отмечает полив и считает следующую дату
+  void markAsWatered() {
+    isWatered = true;
+    
+    // Считаем, через сколько дней поливать в следующий раз
+    int daysToAdd = 1; 
+    if (wateringFrequency.contains('2 дня')) daysToAdd = 2;
+    if (wateringFrequency.contains('2 раза')) daysToAdd = 0; // Если 2 раза в день, то сегодня же
+    
+    final now = DateTime.now();
+    final hour = firstWateringTime?.hour ?? 10;
+    final minute = firstWateringTime?.minute ?? 0;
+    
+    nextWateringDate = DateTime(now.year, now.month, now.day + daysToAdd, hour, minute);
   }
 }
