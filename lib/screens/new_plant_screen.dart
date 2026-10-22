@@ -18,7 +18,8 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
   final _additionalInfoController = TextEditingController();
   
   String _selectedFrequency = '2 раза в день';
-  String _selectedWateringType = 'Верхний полив';
+  // 👇 Меняем значение по умолчанию на пустое
+  String _selectedWateringType = 'Выберите тип'; 
   String _selectedLighting = 'Хорошее освещение';
   String _selectedVentilation = 'Частое';
   TimeOfDay? _firstWateringTime;
@@ -62,10 +63,34 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
     }
   }
 
+  // 👇 ОБНОВЛЕННЫЙ МЕТОД С ПРОВЕРКАМИ
   Future<void> _savePlant() async {
-    if (_nameController.text.isEmpty) {
+    if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите название растения')),
+      );
+      return;
+    }
+
+    if (_firstWateringTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Выберите время первого полива')),
+      );
+      return;
+    }
+
+    // Проверяем время второго полива, если выбрано "2 раза в день"
+    if (_showSecondTime && _secondWateringTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Выберите время второго полива')),
+      );
+      return;
+    }
+
+    // Проверяем, выбран ли тип полива
+    if (_selectedWateringType == 'Выберите тип') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Выберите тип полива')),
       );
       return;
     }
@@ -139,7 +164,8 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
                 _buildInputLabel('Тип полива'),
                 const SizedBox(height: 8),
                 _buildDropdown(
-                  AppStrings.wateringTypes,
+                  // 👇 Добавили пункт "Выберите тип" в начало списка
+                  ['Выберите тип', ...AppStrings.wateringTypes], 
                   _selectedWateringType,
                   (value) => setState(() => _selectedWateringType = value!),
                 ),
@@ -302,7 +328,6 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
     );
   }
 
-  // 👇 ИСПРАВЛЕННЫЙ МЕТОД (Возвращен изначальный системный цвет и анимация)
   Widget _buildDropdown(
     List<String> items,
     String value,
@@ -314,20 +339,19 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
           onTap: () async {
             final RenderBox renderBox = context.findRenderObject() as RenderBox;
             final position = renderBox.localToGlobal(Offset.zero);
-            final width = constraints.maxWidth; // Берем точную ширину поля
+            final width = constraints.maxWidth;
 
             final selected = await showDialog<String>(
               context: context,
-              barrierColor: Colors.transparent, // Убираем затемнение фона
+              barrierColor: Colors.transparent, 
               builder: (BuildContext context) {
                 return Stack(
                   children: [
                     Positioned(
                       left: position.dx,
                       top: position.dy + 56,
-                      width: width, // 👈 Жестко задаем ширину списка!
+                      width: width,
                       child: Material(
-                        // 👈 Убрали жесткий цвет, теперь фон системный (как был изначально)
                         elevation: 4,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -338,7 +362,6 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
                           children: items.map((String item) {
                             return InkWell(
                               onTap: () => Navigator.pop(context, item),
-                              // 👇 Убрали кастомные цвета, вернули стандартную анимацию Flutter
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -370,7 +393,6 @@ class _NewPlantScreenState extends State<NewPlantScreen> {
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              // 👇 Зеленая рамка остается ТОЛЬКО здесь (у поля ввода)
               border: Border.all(color: AppColors.borderGreen, width: 2),
               borderRadius: BorderRadius.circular(10),
             ),
